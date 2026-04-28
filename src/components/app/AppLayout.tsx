@@ -55,8 +55,8 @@ export function AppLayout() {
               <Brain className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="font-display font-extrabold text-foreground text-base leading-none">Mente</p>
-              <p className="font-display font-extrabold gradient-text text-lg leading-none">Ativa ✨</p>
+              <p className="font-display font-extrabold text-foreground text-base leading-none">Pequenos</p>
+              <p className="font-display font-extrabold gradient-text text-lg leading-none">Gênios ✨</p>
             </div>
           </div>
         </div>
@@ -106,7 +106,7 @@ export function AppLayout() {
         <header className="lg:hidden sticky top-0 z-30 bg-background/95 backdrop-blur-md border-b border-border px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Brain className="w-5 h-5 text-primary" />
-            <span className="font-display font-extrabold gradient-text">Mente Ativa</span>
+            <span className="font-display font-extrabold gradient-text">Pequenos Gênios</span>
           </div>
           <button onClick={() => setSidebarOpen(true)} className="p-2 text-muted-foreground hover:bg-muted rounded-xl">
             <Menu className="w-5 h-5" />
