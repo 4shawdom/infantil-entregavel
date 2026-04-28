@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rm -f \"c:/Users/zequi/OneDrive/Área de Trabalho/infantil entregavel/index.html\" \"c:/Users/zequi/OneDrive/Área de Trabalho/infantil entregavel/infantil entregavel.code-workspace\" \"c:/Users/zequi/OneDrive/Área de Trabalho/infantil entregavel/resultado.html\" \"c:/Users/zequi/OneDrive/Área de Trabalho/infantil entregavel/vendas.html\")",
+      "Bash(rm -rf \"c:/Users/zequi/OneDrive/Área de Trabalho/infantil funil/\"*)",
+      "Read(//c/Users/zequi/OneDrive/Área de Trabalho/**)",
+      "Bash(dir \"c:/Users/zequi/OneDrive/Área de Trabalho/\")",
+      "Bash(bun --version)",
+      "PowerShell(bun --version)",
+      "PowerShell(node --version)",
+      "PowerShell(npm --version)",
+      "Bash(npm --version)",
+      "Bash(npm install *)",
+      "Bash(npm run *)",
+      "Bash(gh auth *)",
+      "Bash(git --version)",
+      "Bash(git config *)"
+    ]
+  }
+}
