@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Brain, ArrowRight } from "lucide-react";
 
-const IDADES = ["2 anos","3 anos","4 anos","5 anos","6 anos","7 anos","8 anos","9 anos","10 anos","11 anos","12 anos"];
 
 export default function CriarPerfil() {
   const navigate = useNavigate();
@@ -73,25 +72,16 @@ export default function CriarPerfil() {
               </div>
 
               <div>
-                <label className="text-sm font-semibold text-foreground mb-2 block">
+                <label className="text-sm font-semibold text-foreground mb-1.5 block">
                   Quantos anos ele(a) tem?
                 </label>
-                <div className="grid grid-cols-4 gap-2">
-                  {IDADES.map((idade) => (
-                    <button
-                      key={idade}
-                      type="button"
-                      onClick={() => { setIdadeCrianca(idade); setErro(""); }}
-                      className={`border-2 rounded-xl py-2.5 text-xs font-bold transition-all ${
-                        idadeCrianca === idade
-                          ? "border-primary bg-primary/10 text-primary"
-                          : "border-border bg-background text-muted-foreground hover:border-primary/50"
-                      }`}
-                    >
-                      {idade}
-                    </button>
-                  ))}
-                </div>
+                <input
+                  type="text"
+                  placeholder="Ex: 5 anos, 8 anos, 12 anos..."
+                  value={idadeCrianca}
+                  onChange={(e) => { setIdadeCrianca(e.target.value); setErro(""); }}
+                  className="w-full border-2 border-border rounded-xl px-4 py-3 text-foreground bg-background focus:outline-none focus:border-primary transition-colors text-sm"
+                />
               </div>
 
               {erro && (
