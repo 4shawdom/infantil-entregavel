@@ -1,13 +1,38 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { CheckCircle2, Circle, Clock, Star, ChevronDown, ChevronUp } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
-import { ATIVIDADES, HABILIDADE_CONFIG, getAtividadesParaRotina, type Atividade, type Habilidade } from "@/data/atividades";
-import { supabase } from "@/lib/supabase";
+import { ATIVIDADES, HABILIDADE_CONFIG, type Atividade } from "@/data/atividades";
 import { toast } from "sonner";
 
 const PONTOS_POR_ATIVIDADE = 25;
+
+function getStats(): { pontos: number; nivel: number } {
+  try { return JSON.parse(localStorage.getItem("pg_stats") || "{}"); } catch { return {}; }
+}
+
+function saveStats(stats: { pontos: number; nivel: number }) {
+  localStorage.setItem("pg_stats", JSON.stringify(stats));
+}
+
+function calcularNivel(pontos: number): number {
+  if (pontos >= 900) return 5;
+  if (pontos >= 500) return 4;
+  if (pontos >= 250) return 3;
+  if (pontos >= 100) return 2;
+  return 1;
+}
+
+function getAtividadesHoje(nivel: number): Atividade[] {
+  const pool = ATIVIDADES.filter((a) => a.nivel_min <= nivel && a.nivel_max >= nivel);
+  const hoje = new Date().getDay();
+  const inicio = (hoje * 3) % pool.length;
+  const selecionadas: Atividade[] = [];
+  for (let i = 0; i < 3; i++) {
+    selecionadas.push(pool[(inicio + i) % pool.length]);
+  }
+  return selecionadas;
+}
 
 function AtividadeCard({
   atividade,
@@ -34,10 +59,7 @@ function AtividadeCard({
             onClick={() => !concluida && onConcluir(atividade.id)}
             className={`flex-shrink-0 mt-0.5 transition-all ${concluida ? "text-accent" : "text-muted-foreground hover:text-accent"}`}
           >
-            {concluida
-              ? <CheckCircle2 className="w-6 h-6" />
-              : <Circle className="w-6 h-6" />
-            }
+            {concluida ? <CheckCircle2 className="w-6 h-6" /> : <Circle className="w-6 h-6" />}
           </button>
 
           <div className="flex-1 min-w-0">
@@ -47,7 +69,6 @@ function AtividadeCard({
                 {atividade.nome}
               </h3>
             </div>
-
             <div className="flex items-center gap-2 flex-wrap">
               <Badge variant="outline" className={`text-xs ${habConfig.cor} border-current`}>
                 {habConfig.emoji} {habConfig.label}
@@ -59,7 +80,6 @@ function AtividadeCard({
                 <Star className="w-3 h-3" />+{PONTOS_POR_ATIVIDADE} pts
               </span>
             </div>
-
             <p className="text-muted-foreground text-xs mt-1 leading-relaxed">{atividade.descricao}</p>
           </div>
 
@@ -71,12 +91,10 @@ function AtividadeCard({
           </button>
         </div>
 
-        {/* Detalhes expandidos */}
         {expandida && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
             className="mt-4 space-y-3 border-t border-border pt-3"
           >
             {atividade.materiais.length > 0 && (
@@ -100,13 +118,12 @@ function AtividadeCard({
                 ))}
               </ol>
             </div>
-
             {!concluida && (
               <button
                 onClick={() => onConcluir(atividade.id)}
                 className="w-full gradient-bg text-white rounded-2xl py-2.5 text-sm font-bold hover:opacity-90 transition-opacity"
               >
-                ✅ Marcar como concluída (+{PONTOS_POR_ATIVIDADE} pts)
+                Marcar como concluída (+{PONTOS_POR_ATIVIDADE} pts)
               </button>
             )}
           </motion.div>
@@ -117,59 +134,38 @@ function AtividadeCard({
 }
 
 export default function Rotina() {
-  const { crianca, updateCrianca } = useAuth();
-  const [concluidasHoje, setConcluidasHoje] = useState<string[]>([]);
-  const [carregando, setCarregando] = useState(true);
-
-  const nivel = crianca?.nivel ?? 1;
-  const habilidadeFoco = (crianca?.diagnostico?.principalDificuldade ?? null) as Habilidade | null;
-  const atividadesHoje = getAtividadesParaRotina(nivel, habilidadeFoco).slice(0, 3);
-
   const hoje = new Date().toISOString().split("T")[0];
+  const chaveHoje = `pg_rotina_${hoje}`;
 
-  useEffect(() => {
-    if (!crianca) { setCarregando(false); return; }
-    supabase
-      .from("atividades_concluidas")
-      .select("atividade_id")
-      .eq("crianca_id", crianca.id)
-      .eq("data", hoje)
-      .then(({ data }) => {
-        setConcluidasHoje(data?.map((r) => r.atividade_id) ?? []);
-        setCarregando(false);
-      });
-  }, [crianca, hoje]);
+  const [stats, setStats] = useState(() => {
+    const s = getStats();
+    return { pontos: s.pontos ?? 0, nivel: s.nivel ?? 1 };
+  });
 
-  async function handleConcluir(atividadeId: string) {
-    if (!crianca || concluidasHoje.includes(atividadeId)) return;
+  const [concluidasHoje, setConcluidasHoje] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem(chaveHoje) || "[]"); } catch { return []; }
+  });
 
-    const { error } = await supabase.from("atividades_concluidas").insert({
-      crianca_id: crianca.id,
-      atividade_id: atividadeId,
-      data: hoje,
-    });
+  const atividadesHoje = getAtividadesHoje(stats.nivel);
 
-    if (error) { toast.error("Erro ao salvar. Tente novamente."); return; }
+  function handleConcluir(atividadeId: string) {
+    if (concluidasHoje.includes(atividadeId)) return;
 
-    const novosPontos = (crianca.pontos ?? 0) + PONTOS_POR_ATIVIDADE;
+    const novasCoincluidas = [...concluidasHoje, atividadeId];
+    localStorage.setItem(chaveHoje, JSON.stringify(novasCoincluidas));
+    setConcluidasHoje(novasCoincluidas);
+
+    const novosPontos = stats.pontos + PONTOS_POR_ATIVIDADE;
     const novoNivel = calcularNivel(novosPontos);
+    const novosStats = { pontos: novosPontos, nivel: novoNivel };
+    saveStats(novosStats);
+    setStats(novosStats);
 
-    await updateCrianca({ pontos: novosPontos, nivel: novoNivel });
-    setConcluidasHoje([...concluidasHoje, atividadeId]);
-
-    if (novoNivel > nivel) {
-      toast.success(`🎉 ${crianca.nome} subiu para o Nível ${novoNivel}!`, { duration: 4000 });
+    if (novoNivel > stats.nivel) {
+      toast.success(`🎉 Subiu para o Nível ${novoNivel}!`, { duration: 4000 });
     } else {
-      toast.success(`✅ Atividade concluída! +${PONTOS_POR_ATIVIDADE} pontos`);
+      toast.success(`Atividade concluída! +${PONTOS_POR_ATIVIDADE} pontos`);
     }
-  }
-
-  function calcularNivel(pontos: number): number {
-    if (pontos >= 900) return 5;
-    if (pontos >= 500) return 4;
-    if (pontos >= 250) return 3;
-    if (pontos >= 100) return 2;
-    return 1;
   }
 
   const totalHoje = atividadesHoje.length;
@@ -179,14 +175,6 @@ export default function Rotina() {
   const dataFormatada = new Date().toLocaleDateString("pt-BR", {
     weekday: "long", day: "numeric", month: "long",
   });
-
-  if (carregando) {
-    return (
-      <div className="p-4 flex items-center justify-center h-40">
-        <div className="w-8 h-8 rounded-full border-4 border-primary border-t-transparent animate-spin" />
-      </div>
-    );
-  }
 
   return (
     <div className="p-4 max-w-2xl mx-auto">
@@ -210,9 +198,8 @@ export default function Rotina() {
         <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
           <motion.div
             className="h-full rounded-full gradient-bg"
-            initial={{ width: 0 }}
             animate={{ width: `${progressoHoje}%` }}
-            transition={{ duration: 0.8, delay: 0.2 }}
+            transition={{ duration: 0.6 }}
           />
         </div>
 
@@ -240,14 +227,6 @@ export default function Rotina() {
           </motion.div>
         ))}
       </div>
-
-      {!crianca?.diagnostico && (
-        <div className="mt-4 bg-muted rounded-2xl p-4 text-center">
-          <p className="text-muted-foreground text-sm">
-            Complete o <strong className="text-foreground">diagnóstico</strong> para personalizar sua rotina!
-          </p>
-        </div>
-      )}
     </div>
   );
 }
