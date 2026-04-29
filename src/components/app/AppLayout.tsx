@@ -17,16 +17,17 @@ const navItems = [
 ];
 
 export function AppLayout() {
-  const { profile, crianca, signOut } = useAuth();
+  const { crianca } = useAuth();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  async function handleSignOut() {
-    await signOut();
+  function handleSignOut() {
+    localStorage.removeItem("pg_email");
     navigate("/login");
   }
 
-  const nomeMae = profile?.nome_mae?.split(" ")[0] ?? "Mamãe";
+  const emailSalvo = localStorage.getItem("pg_email") ?? "";
+  const nomeMae = emailSalvo.split("@")[0] || "Mamãe";
   const nomeCrianca = crianca?.nome ?? "seu filho(a)";
 
   return (
