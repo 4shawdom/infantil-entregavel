@@ -7,6 +7,7 @@ import { AppLayout } from "@/components/app/AppLayout";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import CriarSenha from "./pages/CriarSenha";
+import CriarPerfil from "./pages/CriarPerfil";
 import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/app/Dashboard";
 import Rotina from "./pages/app/Rotina";
@@ -25,6 +26,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/criar-perfil" element={<CriarPerfil />} />
             <Route path="/criar-senha" element={<CriarSenha />} />
 
             <Route

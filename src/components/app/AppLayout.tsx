@@ -26,9 +26,9 @@ export function AppLayout() {
     navigate("/login");
   }
 
-  const emailSalvo = localStorage.getItem("pg_email") ?? "";
-  const nomeMae = emailSalvo.split("@")[0] || "Mamãe";
-  const nomeCrianca = crianca?.nome ?? "seu filho(a)";
+  const perfilSalvo = JSON.parse(localStorage.getItem("pg_perfil") || "{}");
+  const nomeMae = perfilSalvo.nomeMae?.split(" ")[0] || "Mamãe";
+  const nomeCrianca = perfilSalvo.nomeCrianca || crianca?.nome || "seu filho(a)";
 
   return (
     <div className="min-h-screen bg-background flex">

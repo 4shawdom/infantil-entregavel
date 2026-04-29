@@ -15,7 +15,8 @@ export default function Login() {
       return;
     }
     localStorage.setItem("pg_email", email.trim().toLowerCase());
-    navigate("/app/dashboard");
+    const perfil = localStorage.getItem("pg_perfil");
+    navigate(perfil ? "/app/dashboard" : "/criar-perfil");
   }
 
   return (
